@@ -1,0 +1,19 @@
+default: &default
+  adapter: postgresql
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  timeout: 5000
+
+development:
+  <<: *default
+  database: merc
+  username: merc
+  password: merc
+  host: localhost
+  port: 15432
+
+staging:
+  <<: *default
+  database: staging
+  username: staging
+  password: staging
+  host: postgres

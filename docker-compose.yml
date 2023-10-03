@@ -1,0 +1,10 @@
+version: "v2"
+services:
+  postgres:
+    image: postgres:15.4-alpine
+    environment:
+      - POSTGRES_DB=merc
+      - POSTGRES_USER=merc
+      - POSTGRES_PASSWORD=merc
+    ports:
+      - 15432:5432
