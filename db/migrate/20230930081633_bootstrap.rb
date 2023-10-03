@@ -3,6 +3,8 @@ class Bootstrap < ActiveRecord::Migration[7.0]
     create_table 'users', force: :cascade do |t|
       t.string 'address', null: false
       t.string 'nickname'
+      t.string 'gender'
+      t.string 'avatar'
 
       t.datetime 'created_at', null: false
       t.datetime 'updated_at', null: false

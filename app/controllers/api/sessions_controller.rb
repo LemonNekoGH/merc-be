@@ -7,8 +7,9 @@ module Api
     # GET /api/sessions
     def show
       @user = current_user
+      authenticate_user!
 
-      make_response 0, '', @user, :created
+      make_response 0, '', @user
     end
 
     # POST /api/sessions
