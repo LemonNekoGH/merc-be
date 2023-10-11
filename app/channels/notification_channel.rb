@@ -2,13 +2,16 @@
 
 class NotificationChannel < ApplicationCable::Channel
   def subscribed
-    stream_from params[:address]
+    stream_for params[:address]
 
     # show latest pending request
     pending = ChatRequests.get_incoming params[:address]
-    from = User.find_by!(address: pending[:from_address])
-    to = User.find_by!(address: pending[:to_address])
-    broadcast_to params[:address], { type: 'request', id: chat_in_progress.id, from:, to: }
+    unless pending.nil?
+      from = User.find_by!(address: pending[:from_address])
+      to = User.find_by!(address: pending[:to_address])
+      broadcast_to params[:address], { type: 'request', id: chat_in_progress.id, from:, to: }
+      return
+    end
 
     # auto enter chat if not exit
     chat_in_progress = Chat.chat_in_progress params[:address]
@@ -16,9 +19,9 @@ class NotificationChannel < ApplicationCable::Channel
   end
 
   # @param data [Hash]
-  def received(data)
-    from = data['from']['address']
-    to = data['to']['address']
+  def receive(data)
+    from = data['from']
+    to = data['to']
 
     if data['type'] == 'reject'
       ChatRequests.reject(data['id'])
@@ -37,7 +40,7 @@ class NotificationChannel < ApplicationCable::Channel
 
       ChatRequests.accept(data['id'])
       # create a chat
-      chat = Chat.create(from: from, to: to)
+      chat = Chats.create(from: from, to: to)
 
       # send chat id
       broadcast_to from, { type: 'accept', id: chat.id }
@@ -50,7 +53,7 @@ class NotificationChannel < ApplicationCable::Channel
       # TODO: use redis to check expiration
       if ChatRequests.user_has_pending_request? to
         ChatRequests.reject(data['id'])
-        broadcast_to from, { type: 'accept', reason: 'pending' }
+        broadcast_to from, { type: 'reject', reason: 'pending' }
         return
       end
 
@@ -63,8 +66,9 @@ class NotificationChannel < ApplicationCable::Channel
       end
 
       # create a request, used to check expiration
-      request = ChatRequests.create(from: from, to: to)
-      broadcast_to to, { type: 'request', from: data['from'], to: data['to'], id: request.id }
+      request = ChatRequests.create!({ from_address: from, to_address: to })
+      from_user = User.find_by!(address: from)
+      broadcast_to to, { type: 'request', from: from_user, id: request.id }
     end
   end
 end

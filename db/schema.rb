@@ -14,7 +14,16 @@ ActiveRecord::Schema[7.0].define(version: 2023_09_30_081633) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
-  create_table "chat", force: :cascade do |t|
+  create_table "chat_requests", force: :cascade do |t|
+    t.string "from_address", null: false
+    t.string "to_address", null: false
+    t.boolean "accepted"
+    t.boolean "canceled"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "chats", force: :cascade do |t|
     t.string "from_address", null: false
     t.string "to_address", null: false
     t.string "end_by"
@@ -27,22 +36,12 @@ ActiveRecord::Schema[7.0].define(version: 2023_09_30_081633) do
     t.datetime "updated_at", null: false
   end
 
-  create_table "chat_requests", force: :cascade do |t|
-    t.string "from_address", null: false
-    t.string "to_address", null: false
-    t.boolean "accepted"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  create_table "message_to_hall", force: :cascade do |t|
-    t.string "address", null: false
+  create_table "message_to_halls", force: :cascade do |t|
     t.string "message", null: false
     t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
   end
 
-  create_table "message_to_user", force: :cascade do |t|
+  create_table "message_to_users", force: :cascade do |t|
     t.integer "chat_id", null: false
     t.string "message", null: false
     t.string "from", null: false

@@ -5,7 +5,7 @@ class Chat < ApplicationRecord
   # @param [String] address
   # @param [Integer] response
   # @param [String] response_reason
-  def user_response(id, address, response, response_reason)
+  def self.user_response(id, address, response, response_reason)
     chat = Chat.find_by!(id: id)
     if chat.from_address == address
       chat.from_response = response
@@ -18,13 +18,13 @@ class Chat < ApplicationRecord
   end
 
   # @param [String] address
-  def chat_in_progress(address)
-    Chat.where(from: address).or(to: address).find_by(end_at: nil)
+  def self.chat_in_progress(address)
+    Chat.where(from_address: address).or(Chat.where(to_address: address)).find_by(end_at: nil)
   end
 
   # @param [Integer] id
   # @param [String] address
-  def exit_chat(id, address)
+  def self.exit_chat(id, address)
     chat = Chat.find_by!(id: id)
     chat.end_at = Time.now
     chat.end_by = address

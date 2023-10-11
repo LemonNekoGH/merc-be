@@ -15,7 +15,7 @@ class ChatChannel < ApplicationCable::Channel
       return
     end
     # save to database
-    MessageToUser.create(chat_id: params[:id], from: data['from'])
+    MessageToUser.create!({ chat_id: params[:id], from: data['from'] })
     broadcast_to @chat, data
   end
 end
