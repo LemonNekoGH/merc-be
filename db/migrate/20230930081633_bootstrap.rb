@@ -24,6 +24,7 @@ class Bootstrap < ActiveRecord::Migration[7.0]
     create_table 'chat_requests', force: :cascade do |t|
       t.string 'from_address', null: false
       t.string 'to_address', null: false
+      t.string 'message', null: false
       t.boolean 'accepted'
       t.boolean 'canceled'
 

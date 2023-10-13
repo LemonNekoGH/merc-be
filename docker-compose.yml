@@ -8,3 +8,19 @@ services:
       - POSTGRES_PASSWORD=merc
     ports:
       - 15432:5432
+    healthcheck:
+      test: pg_isready -U merc -d merc
+      interval: 5s
+      timeout: 3s
+      retries: 5
+  api:
+    image: merc-api
+    ports:
+      - 3000:3000
+    build:
+      dockerfile: ./Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles:
+      - with_api

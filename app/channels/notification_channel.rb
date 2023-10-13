@@ -20,55 +20,68 @@ class NotificationChannel < ApplicationCable::Channel
 
   # @param data [Hash]
   def receive(data)
-    from = data['from']
-    to = data['to']
-
     if data['type'] == 'reject'
-      ChatRequests.reject(data['id'])
-      broadcast_to from, { type: 'reject', reason: 'user_reject' }
+      ChatRequests.reject data['request']
+      request = ChatRequests.find_by id: data['request']
+      broadcast_to request.from_address, { type: 'reject', reason: 'Your request has been rejected' }
 
       return
     end
 
     if data['type'] == 'accept'
       # check request time
-      unless ChatRequests.expired?(data['id'])
-        ChatRequests.reject(data['id'])
-        broadcast_to from, { type: 'reject', reason: 'expired' }
+      request = ChatRequests.find_by id: data['request']
+      if request.created_at.before?(Time.now - 5.minutes)
+        ChatRequests.reject(data['request'])
+        broadcast_to request.to_address, { type: 'reject', reason: 'This request was expired' }
         return
       end
 
-      ChatRequests.accept(data['id'])
+      if request.canceled
+        ChatRequests.reject(data['request'])
+        broadcast_to request.to_address, { type: 'reject', reason: 'This request was canceled' }
+        return
+      end
+
+      ChatRequests.accept(data['request'])
       # create a chat
-      chat = Chats.create(from: from, to: to)
+      chat = Chat.create({ from_address: request.from_address, to_address: request.to_address })
 
       # send chat id
-      broadcast_to from, { type: 'accept', id: chat.id }
-      broadcast_to to, { type: 'accept', id: chat.id }
+      broadcast_to request.from_address, { type: 'accept', id: chat.id }
+      broadcast_to request.to_address, { type: 'accept', id: chat.id }
 
       return
     end
 
     if data['type'] == 'request'
+      from = data['from']
+      to = data['to']
+
       # TODO: use redis to check expiration
       if ChatRequests.user_has_pending_request? to
-        ChatRequests.reject(data['id'])
-        broadcast_to from, { type: 'reject', reason: 'pending' }
+        broadcast_to from, { type: 'reject', reason: 'Target has a pending request' }
         return
       end
 
       chat_in_progress = Chat.chat_in_progress to
       # auto reject when other side is in a chat
       unless chat_in_progress.nil?
-        ChatRequests.reject(data['id'])
-        broadcast_to from, { type: 'reject', reason: 'chatting' }
+        broadcast_to from, { type: 'reject', reason: 'Target is chatting with others' }
+        return
+      end
+
+      chat_in_progress = Chat.chat_in_progress from
+      unless chat_in_progress.nil?
+        broadcast_to from, { type: 'reject', reason: "You can't send request when you are chatting" }
         return
       end
 
       # create a request, used to check expiration
-      request = ChatRequests.create!({ from_address: from, to_address: to })
+      request = ChatRequests.create!({ from_address: from, to_address: to, message: data['message'] })
       from_user = User.find_by!(address: from)
-      broadcast_to to, { type: 'request', from: from_user, id: request.id }
+      broadcast_to from, { type: 'request_id', id: request.id }
+      broadcast_to to, { type: 'request', from: from_user, id: request.id, message: data['message'] }
     end
   end
 end

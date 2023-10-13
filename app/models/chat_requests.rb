@@ -13,16 +13,21 @@ class ChatRequests < ApplicationRecord
 
   # @param [Integer] id
   def self.expired?(id)
-    ChatRequests.find_by(id: id).created_at.before?(Time.now - 5.minutes)
+    !ChatRequests.find_by(id: id).created_at.before?(Time.now - 5.minutes)
   end
 
   # @param [Integer] id
   def self.accept(id)
-    ChatRequests.update(id: id, accepted: true)
+    ChatRequests.update({ id: id, accepted: true })
   end
 
   # @param [Integer] id
   def self.reject(id)
-    ChatRequests.update(id: id, accepted: false)
+    ChatRequests.update({ id: id, accepted: false })
+  end
+
+  # @param [Integer] id
+  def self.cancel(id)
+    ChatRequests.update({ id: id, canceled: true })
   end
 end

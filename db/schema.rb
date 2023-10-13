@@ -17,6 +17,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_09_30_081633) do
   create_table "chat_requests", force: :cascade do |t|
     t.string "from_address", null: false
     t.string "to_address", null: false
+    t.string "message", null: false
     t.boolean "accepted"
     t.boolean "canceled"
     t.datetime "created_at", null: false
