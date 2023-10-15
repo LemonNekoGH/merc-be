@@ -28,12 +28,20 @@ class NotificationChannel < ApplicationCable::Channel
       return
     end
 
+    if data['type'] == 'cancel'
+      ChatRequests.reject data['request']
+      request = ChatRequests.find_by id: data['request']
+      broadcast_to request.from_address, { type: 'reject', reason: 'This request has been canceled' }
+
+      return
+    end
+
     if data['type'] == 'accept'
       # check request time
       request = ChatRequests.find_by id: data['request']
       if request.created_at.before?(Time.now - 5.minutes)
         ChatRequests.reject(data['request'])
-        broadcast_to request.to_address, { type: 'reject', reason: 'This request was expired' }
+        broadcast_to request.to_address, { type: 'reject', reason: 'This request has been expired' }
         return
       end
 
